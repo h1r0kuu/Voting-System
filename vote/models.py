@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator 
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 # Create your models here.
 class User(AbstractUser):
@@ -11,19 +13,24 @@ class User(AbstractUser):
 class Voting(models.Model):
     title = models.CharField(max_length = 100)
     description = models.CharField(max_length = 500)
-    expired = models.BooleanField(default = False)
     creator = models.ForeignKey(User, on_delete = models.SET_NULL, null = True)
     VOTING_TYPE_CHOICES = [
         ("U","USUAL"),
         ("O","OPTIONAL"),
     ]
-    voting_type = models.CharField(choices=VOTING_TYPE_CHOICES, max_length=1)
+    voting_type = models.CharField(choices=VOTING_TYPE_CHOICES, max_length=1, default = VOTING_TYPE_CHOICES[0][0])
     kworum = models.PositiveIntegerField(default = 51, validators=[MinValueValidator(1), MaxValueValidator(100)])
-    start_time = models.DateTimeField(null = False)
+    start_time = models.DateTimeField(null = False, default = timezone.now())
     end_time = models.DateTimeField(null = False)
     created_at = models.DateTimeField(auto_now_add = True)
     options = models.ManyToManyField('VotingOption', related_name = '+')
 
+    def save(self, *args, **kwargs):
+        if not self.id:
+            super(Voting, self).save(*args, **kwargs)
+        if len(self.options.values()) > 5:
+            raise ValidationError("Maximum quantity of options for Voting is 5")
+        super(Voting, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -35,7 +42,6 @@ class Voting(models.Model):
 
 class VotingOption(models.Model):
     option_value = models.CharField(max_length = 50, unique = True)
-
 
     def __str__(self):
         return f'{self.option_value}'
