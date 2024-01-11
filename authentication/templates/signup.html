@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %} Signup {% endblock title %}
+{% block content %}
+<div class="container">
+<form method="POST">
+  {% csrf_token %}
+  {% for field in form %}
+  <div class="form-group">
+     {{ field.errors }}
+      {% comment %} <label for="exampleInputEmail1">Email address</label> {% endcomment %}
+
+      {{ field.label_tag }} {{ field }}
+  </div>
+  {% endfor %}
+  <div class="form-group form-check">
+    <input type="checkbox" class="form-check-input" id="exampleCheck1" />
+    <label class="form-check-label" for="exampleCheck1">Check me out</label>
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+</div>
+{% endblock content %}
