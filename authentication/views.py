@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 # Create your views here.
 class Login(View):
     form_class = SignInForm
-    template_name = "signin.html"
+    template_name = "login.html"
 
     def get(self, request, *args, **kwargs):
         form = self.form_class
