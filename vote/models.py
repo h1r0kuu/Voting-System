@@ -50,7 +50,7 @@ class Voting(models.Model):
 
 
 class VotingOption(models.Model):
-    image = models.ImageField(upload_to='uploads/', null=True)
+    image = models.ImageField(upload_to='uploads/', null=True, blank=True)
     option_value = models.CharField(max_length = 50, unique = True)
 
     def __str__(self):
