@@ -53,4 +53,32 @@ class UpcomingVotingsListView(ListView):
 class VoteDetailView(DetailView):
     model = Voting
     template_name = 'votings/voting_detail.html'
-    context_object_name = 'voting'    context_object_name = 'voting'
+    context_object_name = 'voting'
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        options = context['voting'].options.all()
+        if user.is_authenticated:
+            for option in options:
+                has_user_voted = option.vote_set.filter(user=user).exists()
+                if has_user_voted:
+                    option.voted = True
+                    break
+        context['options'] = options        
+        return context
+
+    def post(self, request, *args, **kwargs):
+        voting = self.get_object()
+        if request.user.is_authenticated and voting.is_current():
+            option_id = request.POST['option']
+            try:
+                existed_vote = Vote.objects.filter(voting=voting, user=request.user).first()
+
+                if existed_vote and option_id != existed_vote.option.id:
+                    existed_vote.delete()
+
+                Vote.objects.get_or_create(option_id=option_id, voting=voting, user=request.user)
+            except ValidationError:
+                print("Validation error")
+            return JsonResponse({'status': 'success'})
