@@ -29,9 +29,11 @@ class VotingOptionInline(admin.TabularInline):
 class VotingAdmin(admin.ModelAdmin):
     list_display = ('title', 'truncated_description', 'creator', 'voting_type', 'quorum', 'current_quorum', 'start_time', 'end_time')
     search_fields = ('title', 'description', 'creator', 'voting_type', 'quorum', 'start_time', 'end_time')
+
     exclude = ('options', )
 
     list_per_page = 10
+
     form = VotingForm
     inlines = [VotingOptionInline]
 
@@ -45,6 +47,11 @@ class VotingAdmin(admin.ModelAdmin):
     truncated_description.short_description = 'Description'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'creator':
+            kwargs['initial'] = request.user
+            kwargs['disabled'] = True
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @admin.register(Vote)
 class VoteAdmin(admin.ModelAdmin):
