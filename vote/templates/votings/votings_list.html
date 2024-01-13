@@ -4,41 +4,21 @@
 {% block content %}
 <div class="container mt-5">
   <div class="list-group">
-    {% if current %}
-      <h5 class="text-center mb-4">Current</h5>
-      {% for voting in current %}
+      <h5 class="text-center mb-4">{{page_title}}</h5>
+      {% for voting in votings %}
       <a
         href="{% url 'vote_details' pk=voting.id %}"
-        class="list-group-item list-group-item-action border border-white active"
+        class="list-group-item list-group-item-action border border-white active mb-1"
         aria-current="true"
       >
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{ voting.title }}</h5>
           <small>{{voting.end_time|naturaltime}}</small>
         </div>
-        <p class="mb-1">{{ voting.description }}</p>
+        <p class="mb-1" style="word-wrap: break-word;">{{ voting.description }}</p>
       </a>
       {% endfor %}
-    {% endif %}
   </div>
-
-  <div class="list-group mt-4">
-    {% if expired %}
-      <h5 class="text-center mb-4">Old</h5>
-      {% for voting in expired %}
-      <a
-        href="{% url 'vote_details' pk=voting.id %}"
-        class="list-group-item list-group-item-action"
-        aria-current="true"
-      >
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1">{{ voting.title }}</h5>
-          <small> {{voting.end_time|naturaltime}}</small>
-        </div>
-        <p class="mb-1">{{ voting.description }}</p>
-      </a>
-      {% endfor %}
-    {% endif %}
   </div>
 </div>
 {% endblock content %}
