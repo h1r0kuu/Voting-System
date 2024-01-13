@@ -1,3 +1,4 @@
+from django.forms.models import BaseInlineFormSet
 from django.utils.html import format_html
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
@@ -6,18 +7,31 @@ from .models import *
 
 admin.site.register(User, UserAdmin)
 
+class VotingOptionInlineFormSet(BaseInlineFormSet):
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+
+        if index == 0 and not form.initial.get('votingoption'):
+            default_option = VotingOption.objects.filter(option_value='Wstrzymuje sie').first()
+            form.fields['votingoption'].initial = default_option
+            form.fields['votingoption'].disabled = True
+            
+
 class VotingOptionInline(admin.TabularInline):
     model = Voting.options.through
+    formset = VotingOptionInlineFormSet
     extra = 5
+    min_num = 3
     max_num = 6
+
 
 @admin.register(Voting)
 class VotingAdmin(admin.ModelAdmin):
     list_display = ('title', 'truncated_description', 'creator', 'voting_type', 'quorum', 'current_quorum', 'start_time', 'end_time')
     search_fields = ('title', 'description', 'creator', 'voting_type', 'quorum', 'start_time', 'end_time')
-    list_per_page = 10
     exclude = ('options', )
 
+    list_per_page = 10
     form = VotingForm
     inlines = [VotingOptionInline]
 
@@ -30,6 +44,7 @@ class VotingAdmin(admin.ModelAdmin):
         return format_html(f'<div title="{obj.description}">{obj.description[:50]}...</div>')
     truncated_description.short_description = 'Description'
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
 
 @admin.register(Vote)
 class VoteAdmin(admin.ModelAdmin):
