@@ -1,0 +1,27 @@
+{% extends "admin/change_form.html" %}
+
+{% block admin_change_form_document_ready %}
+  {{ block.super }}
+  <script>
+    (function($) {
+      function toggleVotingOptionInline() {
+        const votingType = $('#id_voting_type').val();
+        const votingOptionInline = $('#votingoption_set-group');
+        const usualVotingInline = $('#usualvote-group')
+
+        if (votingType === 'U') {
+          votingOptionInline.hide();
+          usualVotingInline.show();
+        } else {
+          votingOptionInline.show();
+          usualVotingInline.hide();
+        }
+      }
+
+      $(document).ready(function() {
+        toggleVotingOptionInline();
+        $('#id_voting_type').change(toggleVotingOptionInline);
+      });
+    })(django.jQuery);
+  </script>
+{% endblock %}

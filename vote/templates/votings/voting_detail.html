@@ -2,6 +2,22 @@
 {% load humanize %}
 
 {% block title %} Home {% endblock title %}
+{% block additional_styles %}
+<style>
+.card {
+  /* From https://css.glass */
+  background: rgba(0, 0, 0, 0.36);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8.8px);
+  -webkit-backdrop-filter: blur(8.8px);
+}
+
+.card.pressed {
+  background-color: #f0f0f0;
+}
+</style>
+{% endblock additional_styles %}
 
 {% block content %}
   <div id='alert' class="alert alert-warning alert-dismissible fade show" role="alert" style="display: none;"> 
@@ -10,26 +26,40 @@
   </div>
     <div class="container">
         <div class="container-xl big-padding">
-            <div class="col section-title text-center">
-                <h2 class="fs-4">{{ voting.title }}</h2>
+            <div class="col section-title text-center my-5">
+                <h2 class="fs-4" style="word-wrap: break-word;">{{ voting.title }}</h2>
                 <p class="text-center" style="word-wrap: break-word;">{{ voting.description }}</p>
             </div>
             <div class="row">
+              {% if voting.voting_type == "U"%}
                 {% for option in options %}
                 <div class="col-lg-4 col-md-6">
-                    <div class="text-dark text-center mb-1 votcard shadow-md bg-white p-4 pt-5">
+                    <div class="card text-white text-center mb-1 shadow-md  p-4 pt-5">
+                        <div class="card-body">
+                            <h5 class="card-title">{{option.1}}</h5>
+                            {% if option.0 == selected_option.0 %}
+                              <button class="btn btn-success fw-bolder px-4 ms-2 fs-8 voted-option" data-id={{option.0}}>Voted</button>
+                            {% else %}
+                              <button class="btn btn-danger fw-bolder px-4 ms-2 fs-8 option" data-id={{option.0}}>Vote</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+              {% else%}
+                {% for option in options %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card text-white text-center mb-1 shadow-md  p-4 pt-5">
                         <h4 class="mt-3 fs-5 mb-1 fw-bold">{{option.option_value}}</h4>
-                        <p class="text-dark mt-3 mb-3 fs-8">Aliquam utrum nibh rutrum nibh vitae tortor
-                            dapibus egestas. Cras condimentum dapibus tellus vel semper. Quisque vel dui
-                            molestie est auctor utrum nibh porttitor.</p>
-                          {% if option.voted %}
-                            <button class="btn btn-success fw-bolder px-4 ms-2 fs-8 voted-option" data-id={{option.id}}>Voted</button>
-                          {% else %}
-                            <button class="btn btn-danger fw-bolder px-4 ms-2 fs-8 option" data-id={{option.id}}>Vote</button>
-                          {% endif %}
+                        {% if option.id == selected_option.id %}
+                          <button class="btn btn-success fw-bolder px-4 ms-2 fs-8 voted-option" data-id={{option.id}}>Voted</button>
+                        {% else %}
+                          <button class="btn btn-danger fw-bolder px-4 ms-2 fs-8 option" data-id={{option.id}}>Vote</button>
+                        {% endif %}
                     </div>
                 </div>                
                 {% endfor %}
+              {% endif %}
             </div>
         </div>
     </div>

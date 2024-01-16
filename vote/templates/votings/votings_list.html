@@ -4,8 +4,8 @@
 {% block content %}
 <div class="container mt-5">
   <div class="list-group">
-      <h5 class="text-center mb-4">{{page_title}}</h5>
-      {% for voting in votings %}
+    <h5 class="text-center mb-4">{{page_title}}</h5>
+    {% for voting in votings %}
       <a
         href="{% url 'vote_details' pk=voting.id %}"
         class="list-group-item list-group-item-action border border-white active mb-1"
@@ -17,8 +17,44 @@
         </div>
         <p class="mb-1" style="word-wrap: break-word;">{{ voting.description }}</p>
       </a>
+    {% endfor %}
+  </div>
+  {% if page_obj %}
+  <nav aria-label="..." class="my-1">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">Previous</a>
+        </li>
+        {% if page_obj.number > 3 %}
+          <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+          {% if page_obj.number > 4 %}
+            <span>...</span>
+          {% endif %}
+        {% endif %}
+      {% endif %}
+      
+      {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+          <a class="page-link active" href="#">{{i}} <span class="sr-only">(current)</span></a>
+        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+          <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
+        {% endif %}
       {% endfor %}
-  </div>
-  </div>
+
+      {% if page_obj.has_next %}
+        {% if page_obj.number < page_obj.paginator.num_pages|add:'-3' %}
+          <span>...</span>
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a></li>
+        {% elif page_obj.number < page_obj.paginator.num_pages|add:'-2' %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a></li>
+        {% endif %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
 </div>
 {% endblock content %}
