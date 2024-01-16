@@ -85,7 +85,9 @@
       .bd-mode-toggle .dropdown-menu .active .bi {
         display: block !important;
       }
-    </style>  
+    </style>
+    {% block additional_styles %}
+    {% endblock additional_styles %}
   </head>
   <body>
     {% include 'includes/theme-toggler.html' %}
