@@ -5,6 +5,5 @@ from vote.models import User
 
 @receiver(post_save, sender=User)
 def set_is_staff(sender, instance, **kwargs):
-    if instance.groups.filter(name='sekretarz').exists():
-        instance.is_staff = True
-        instance.save()
+    if instance.groups.filter(name='admin').exists() or instance.groups.filter(name='sekretarz').exists():
+        User.objects.filter(id=instance.id).update(is_staff=True)
