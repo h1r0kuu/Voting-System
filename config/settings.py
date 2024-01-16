@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
+    'rangefilter',
+
     'authentication.apps.AuthenticationConfig',
     'vote.apps.VoteConfig',
 ]
