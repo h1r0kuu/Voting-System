@@ -81,4 +81,10 @@ class VoteDetailView(DetailView):
                 Vote.objects.get_or_create(option_id=option_id, voting=voting, user=request.user)
             except ValidationError:
                 print("Validation error")
-            return JsonResponse({'status': 'success'})
+            return JsonResponse({'status': 'success'})            return JsonResponse({'status': 'success'})
+
+class GetOptionsView(View):
+    def get(self, request, *args, **kwargs):
+        voting_id = request.GET.get('voting_id')
+        options = VotingOption.objects.filter(voting_id=voting_id).values('id', 'option_value')
+        return JsonResponse({'options': list(options)})
