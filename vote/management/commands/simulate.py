@@ -66,7 +66,7 @@ class Command(BaseCommand):
             for user in users:
                 chance_to_vote = random.random()
                 if chance_to_vote > 0.25 and chance_to_vote < 0.85:
-                    if voting.is_current():
+                    if voting.is_current() and voting.open_for_voting:
                         option = None
                         if voting.voting_type == 'O':
                             option = VotingOption.objects.filter(voting=voting).order_by('?').first()
