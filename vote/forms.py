@@ -13,3 +13,6 @@ class VoteForm(forms.ModelForm):
     class Meta:
         model = Vote
         fields = '__all__'
+
+class ArchiveForm(forms.Form):
+    password = forms.CharField(widget=forms.PasswordInput)

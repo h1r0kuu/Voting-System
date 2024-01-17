@@ -4,8 +4,11 @@ import factory.fuzzy
 import factory
 from factory.django import DjangoModelFactory
 from .models import *
+from account_system.models import User
 import datetime
 from datetime import timedelta
+from django.db.models.fields.files import ImageFieldFile, FileField
+
 
 fake = Faker()
 
@@ -54,7 +57,12 @@ class VotingOptionFactory(DjangoModelFactory):
         model = VotingOption
 
     voting = factory.SubFactory(VotingFactory)
-    image = factory.Faker("image_url")
+    image = factory.Maybe(
+        factory.LazyFunction(lambda: fake.pybool(20)),
+        yes_declaration=factory.django.ImageField(color="blue"),
+        no_declaration=None
+    ) 
+
     option_value = factory.Sequence(lambda n: fake.text(5).replace(".", " ") + fake.text(5))
 
 

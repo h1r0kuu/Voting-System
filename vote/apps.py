@@ -6,4 +6,4 @@ class VoteConfig(AppConfig):
     name = 'vote'
 
     def ready(self):
-        import vote.signals
+        import account_system.signals

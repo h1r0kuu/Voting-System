@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load add_attribute %}
+{% block title %} Change Settings {% endblock title %}
+{% block content %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <div id='alert' class="alert alert-{% if message.tags %}{{message.tags }}{% endif %} alert-dismissible fade show" role="alert" style="display: none;"> 
+        <strong>{% if message.tags %} {{message.tags }} {% endif %}!</strong> {{message}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<div class="container" style="margin-top: 5%">
+  <h2 class="mb-3">Update general settings</h2>
+  <form method="POST" class="needs-validation " novalidate>
+    {% csrf_token %}
+    {% for field in general_form %}
+    <div class="form-group mb-3">
+        <label class="form-label" for="{{ field.auto_id }}">{{ field.label }}</label>
+        {% if field.errors %}
+            {{field|add_attr:'form-control is-invalid'}}
+            {% for error in field.errors %}
+            <div class="invalid-feedback">
+                {{ error }}
+            </div>
+            {% endfor %}
+        {% else %}
+            {{field}}
+        {% endif %}
+    </div>
+    {% endfor %}
+    <button type="submit" name="{{general_form_button}}" class="btn btn-primary">Update</button>
+  </form>
+  <h2 class="my-3">Change password</h2>
+  <form method="POST" class="needs-validation" novalidate>
+    {% csrf_token %}
+    {% for field in password_form %}   
+    <div class="form-group mb-3">
+        <label class="form-label" for="{{ field.auto_id }}">{{ field.label }}</label>
+        {% if field.errors %}
+            {{field|add_attr:'form-control is-invalid'}}
+            {% for error in field.errors %}
+            <div class="invalid-feedback">
+                {{ error }}
+            </div>
+            {% endfor %}
+        {% else %}
+            {{field}}
+        {% endif %}
+    </div>
+    {% endfor %}
+    <button type="submit" name="{{password_form_button}}" class="btn btn-primary">Change password</button>
+  </form>
+</div>
+{% endblock content %}
+
+
+{% if messages %}
+    {% block additional_scripts %}
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script type="text/javascript">
+            const alert = $('.alert')
+                alert.show('medium')
+                setTimeout(function(){
+                alert.hide('medium')
+            }, 5000)
+        </script>    
+    {% endblock additional_scripts %}
+{% endif %}

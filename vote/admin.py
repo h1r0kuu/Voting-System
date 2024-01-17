@@ -1,25 +1,14 @@
 import zipfile
-from django.contrib.admin import DateFieldListFilter
-from django.forms.models import BaseInlineFormSet
-from django.utils.html import format_html
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from django.utils.html import html_safe
 from django.urls import reverse
 from .forms import *
 from .models import *
-from reportlab.pdfgen import canvas
-from django.http import HttpResponse, FileResponse
+from django.http import FileResponse
 from .utils import generate_pdf_report
-from rangefilter.filters import (
-    DateRangeFilterBuilder,
-    DateTimeRangeFilterBuilder,
-    NumericRangeFilterBuilder,
-    DateRangeQuickSelectListFilterBuilder,
-)
-
-
-admin.site.register(User, UserAdmin)
+from rangefilter.filters import DateTimeRangeFilterBuilder
+from account_system.models import User
+from django.utils.functional import cached_property
+from django.utils.html import format_html, html_safe
 
 
 class VotingOptionInline(admin.TabularInline):
@@ -97,10 +86,13 @@ class VoteAdmin(admin.ModelAdmin):
 
 @admin.register(VotingOption)
 class VotingOptionAdmin(admin.ModelAdmin):
-    list_display = ('option_value', 'image')
+    list_display = ('option_value', 'image_tag')
     search_fields = ('option_value',)
     list_per_page = 20
 
-    def image(self):
-        return mark_safe('<img src="%s" width="150" height="150" />' % (self.image.url))
-    image.short_description = 'Image'
+
+    def image_tag(self, obj):
+        html = '<img src="{img}" width="150" height="150">'
+        if obj.image:
+            return format_html(html, img=obj.image.url)
+    image_tag.short_description = 'Image'

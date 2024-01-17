@@ -1,16 +1,10 @@
-from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from account_system.models import User
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
 from django.utils import timezone
 from django.utils.html import mark_safe
 from django.utils import timezone
-
-
-# Create your models here.
-class User(AbstractUser):
-    pass
 
 
 class Voting(models.Model):
@@ -37,7 +31,9 @@ class Voting(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        return super(Voting, self).save(*args, **kwargs)
+        super(Voting, self).save(*args, **kwargs)
+        if self.id and self.voting_type == "O":
+            VotingOption.objects.create(voting=self, option_value="Wstrzymuje się")
 
     def is_current(self):
         now = timezone.now()
@@ -90,7 +86,7 @@ class OptionalVoting(models.Model):
 class VotingOption(models.Model):
     voting = models.ForeignKey(Voting, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='uploads/', null=True, blank=True)
-    option_value = models.CharField(max_length = 50, unique = True)
+    option_value = models.CharField(max_length = 50)
 
     def clean(self):
         if self.voting_id is not None and self.voting.voting_type == 'U':
@@ -98,7 +94,7 @@ class VotingOption(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        return super(VotingOption, self).save(*args, **kwargs)
+        super(VotingOption, self).save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.option_value}'
@@ -144,7 +140,7 @@ class Vote(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        return super(Vote, self).save(*args, **kwargs)
+        super(Vote, self).save(*args, **kwargs)
 
     def __str__(self):
         string = f"{self.voting.title} {self.user.get_full_name()} "
