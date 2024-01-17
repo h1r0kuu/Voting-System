@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 
     'authentication.apps.AuthenticationConfig',
     'vote.apps.VoteConfig',
+    'dumpdata.apps.DumpdataConfig'
 ]
 
 MIDDLEWARE = [

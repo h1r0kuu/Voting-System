@@ -1,0 +1,6 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block submit_buttons_bottom %}
+    <input type="submit" value="{% trans 'Download archive' %}" name="_saveasnew" {{ onclick_attrib }}/>
+{% endblock %}
