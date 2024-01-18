@@ -16,4 +16,4 @@ class DumpdataAdmin(admin.ModelAdmin):
         return False
 
     def response_add(self, request, obj, post_url_continue=None):
-        return create_dumpdate_archive(obj.password)
+        return create_dumpdate_archive(obj.archive_password)

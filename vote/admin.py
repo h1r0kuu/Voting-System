@@ -9,6 +9,7 @@ from rangefilter.filters import DateTimeRangeFilterBuilder
 from account_system.models import User
 from django.utils.functional import cached_property
 from django.utils.html import format_html, html_safe
+import pyzipper
 
 
 class VotingOptionInline(admin.TabularInline):
@@ -48,15 +49,14 @@ class VotingAdmin(admin.ModelAdmin):
     @admin.action(description="Wygeneruj raport")
     def generate_raport(self, request, queryset):
         if len(queryset) > 1:
-            zip_file = zipfile.ZipFile('reports.zip', 'w')
-
-            for obj in queryset:
-                raport = RaportPDF(obj).generate_pdf()
-                zip_file.writestr(f'report_{obj.title}.pdf', raport.getvalue())
-
+            archive_name = "reports.zip"
+            with pyzipper.AESZipFile(archive_name, 'w') as zip_file:
+                for obj in queryset:
+                    raport = RaportPDF(obj).generate_pdf()
+                    zip_file.writestr(f'report_{obj.title}.pdf', raport.getvalue())
             zip_file.close()
 
-            return FileResponse(open('reports.zip', 'rb'), as_attachment=True, filename='reports.zip')
+            return FileResponse(open(archive_name, 'rb'), as_attachment=True, filename=archive_name)
         
         return RaportPDF(queryset.first()).generate_pdf()
 
