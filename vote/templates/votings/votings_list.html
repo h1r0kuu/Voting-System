@@ -24,7 +24,7 @@
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">Previous</a>
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">Poprzednia</a>
         </li>
         {% if page_obj.number > 3 %}
           <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
@@ -36,7 +36,7 @@
       
       {% for i in page_obj.paginator.page_range %}
         {% if page_obj.number == i %}
-          <a class="page-link active" href="#">{{i}} <span class="sr-only">(current)</span></a>
+          <a class="page-link active" href="#">{{i}} <span class="sr-only">(obecna)</span></a>
         {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
           <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
         {% endif %}
@@ -50,7 +50,7 @@
           <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a></li>
         {% endif %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Następna</a>
         </li>
       {% endif %}
     </ul>

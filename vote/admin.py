@@ -40,7 +40,7 @@ class VotingAdmin(admin.ModelAdmin):
 
     def truncated_description(self, obj):
         return format_html(f'<div title="{obj.description}">{obj.description[:50]}...</div>')
-    truncated_description.short_description = 'Description'
+    truncated_description.short_description = 'Opis'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'creator':
@@ -48,6 +48,7 @@ class VotingAdmin(admin.ModelAdmin):
             kwargs['disabled'] = True
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    @admin.action(description="Wygeneruj raport")
     def generate_raport(self, request, queryset):
         if len(queryset) > 1:
             zip_file = zipfile.ZipFile('reports.zip', 'w')
@@ -95,4 +96,4 @@ class VotingOptionAdmin(admin.ModelAdmin):
         html = '<img src="{img}" width="150" height="150">'
         if obj.image:
             return format_html(html, img=obj.image.url)
-    image_tag.short_description = 'Image'
+    image_tag.short_description = 'Obraz'

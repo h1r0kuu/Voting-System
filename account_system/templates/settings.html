@@ -14,7 +14,7 @@
 {% endif %}
 
 <div class="container" style="margin-top: 5%">
-  <h2 class="mb-3">Update general settings</h2>
+  <h2 class="mb-3">Aktualizacja ustawień ogólnych</h2>
   <form method="POST" class="needs-validation " novalidate>
     {% csrf_token %}
     {% for field in general_form %}
@@ -32,9 +32,9 @@
         {% endif %}
     </div>
     {% endfor %}
-    <button type="submit" name="{{general_form_button}}" class="btn btn-primary">Update</button>
+    <button type="submit" name="{{general_form_button}}" class="btn btn-primary">Aktualizuj</button>
   </form>
-  <h2 class="my-3">Change password</h2>
+  <h2 class="my-3">Zmiana hasła</h2>
   <form method="POST" class="needs-validation" novalidate>
     {% csrf_token %}
     {% for field in password_form %}   
@@ -52,7 +52,7 @@
         {% endif %}
     </div>
     {% endfor %}
-    <button type="submit" name="{{password_form_button}}" class="btn btn-primary">Change password</button>
+    <button type="submit" name="{{password_form_button}}" class="btn btn-primary">Zmienić hasło</button>
   </form>
 </div>
 {% endblock content %}

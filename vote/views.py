@@ -18,7 +18,7 @@ class FinishedVotingsListView(ListView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context['page_title'] = "Finished votings"
+        context['page_title'] = "Zakończone głosowania"
         return context
 
 class CurrentVotingsListView(ListView):
@@ -33,7 +33,7 @@ class CurrentVotingsListView(ListView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context['page_title'] = "Current votings"
+        context['page_title'] = "Aktualne głosowania"
         return context
 
 
@@ -48,7 +48,7 @@ class UpcomingVotingsListView(ListView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context['page_title'] = "Upcoming votings"
+        context['page_title'] = "Nadchodzące głosowania"
         return context
 
 

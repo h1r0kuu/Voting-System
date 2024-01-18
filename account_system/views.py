@@ -83,18 +83,18 @@ class UserChangeSettingsView(View):
             general_form = self.general_form_class(request.POST, instance=request.user)
             if general_form.is_valid():     
                 general_form.save()
-                messages.success(request, "Profile details updated!")
+                messages.success(request, "Ustawienia ogólne zostały zaktualizowane!")
             else:
-                messages.error(request, "Something went wrong :(")
+                messages.error(request, "Coś poszło nie tak :(")
                 return render(request, self.template_name, context=self.get_invalid_form_context_data(general_form, self.password_form_class(user = request.user)))
         elif self.password_button_name in request.POST:
             password_form = self.password_form_class(data=request.POST, user=request.user)
             if password_form.is_valid():     
                 password_form.save()
                 update_session_auth_hash(request, password_form.user)
-                messages.success(request, "Password changed!")
+                messages.success(request, "Hasło zostało zmienione!")
             else:
-                messages.error(request, "Something went wrong :(")
+                messages.error(request, "Coś poszło nie tak :(")
                 return render(request, self.template_name, context=self.get_invalid_form_context_data(self.general_form_class(instance = request.user), password_form))
         return render(request, self.template_name, context=self.get_context_data(request))
 
