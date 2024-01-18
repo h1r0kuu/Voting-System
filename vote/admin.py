@@ -4,7 +4,7 @@ from django.urls import reverse
 from .forms import *
 from .models import *
 from django.http import FileResponse
-from .utils import generate_pdf_report
+from .utils import RaportPDF
 from rangefilter.filters import DateTimeRangeFilterBuilder
 from account_system.models import User
 from django.utils.functional import cached_property
@@ -16,27 +16,24 @@ class VotingOptionInline(admin.TabularInline):
     extra = 5
     template = 'admin/voting/inline.html'
 
-class UsualVotingInline(admin.TabularInline):
-    model = UsualVoting
-    extra = 1
-
 
 @admin.register(Voting)
 class VotingAdmin(admin.ModelAdmin):
-    list_display = ('title', 'truncated_description', 'creator', 'voting_type', 'quorum', 'current_quorum', 'start_time', 'end_time')
+    list_display = ('title', 'truncated_description', 'creator', 'voting_type', 'quorum', 'current_quorum', 'relative_majority', 'start_time', 'end_time')
     search_fields = ('title', 'description', 'creator__username', 'voting_type', 'quorum', 'start_time', 'end_time')
     actions = ['generate_raport']
-    list_filter = ('voting_type', ('start_time', DateTimeRangeFilterBuilder(title="Start time")), ('end_time', DateTimeRangeFilterBuilder(title="End time")))
+    list_filter = ('voting_type',
+                   ('start_time', DateTimeRangeFilterBuilder(title="Start time")),
+                   ('end_time', DateTimeRangeFilterBuilder(title="End time")),
+                   'relative_majority',
+                   'quorum'
+                   )
 
     form = VotingForm
-    inlines = [UsualVotingInline, VotingOptionInline]
+    inlines = [VotingOptionInline]
     list_per_page = 10
     change_form_template = 'admin/voting/change_form.html'
 
-    def current_quorum(self, obj):
-        total_users = User.objects.count()
-        voted_users = obj.vote_set.count()
-        return '{}%'.format(int((voted_users / total_users) * 100))
 
     def truncated_description(self, obj):
         return format_html(f'<div title="{obj.description}">{obj.description[:50]}...</div>')
@@ -54,13 +51,14 @@ class VotingAdmin(admin.ModelAdmin):
             zip_file = zipfile.ZipFile('reports.zip', 'w')
 
             for obj in queryset:
-                report = generate_pdf_report(obj)
-                zip_file.writestr(f'report_{obj.title}.pdf', report.getvalue())
+                raport = RaportPDF(obj).generate_pdf()
+                zip_file.writestr(f'report_{obj.title}.pdf', raport.getvalue())
 
             zip_file.close()
 
             return FileResponse(open('reports.zip', 'rb'), as_attachment=True, filename='reports.zip')
-        return generate_pdf_report(queryset.first())
+        
+        return RaportPDF(queryset.first()).generate_pdf()
 
 @html_safe
 class JSPath:

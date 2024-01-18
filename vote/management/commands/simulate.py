@@ -20,7 +20,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **kwargs):
         self.stdout.write("Deleting old data...")
-        models = [Vote, User, Voting, UsualVoting, OptionalVoting, VotingOption]
+        models = [Vote, User, Voting, VotingOption]
         for m in models:
             self.stdout.write(f"Deleting old data for {m.__name__}")
             m.objects.all().delete()
@@ -49,15 +49,9 @@ class Command(BaseCommand):
         votings = []
         for _ in range(NUM_VOTINGS):
             voting = VotingFactory(creator = random.choice(users))
-            if voting.voting_type == 'U':
-                UsualVotingFactory(voting=voting)
-            elif voting.voting_type == 'O':
-                options = []
+            if voting.voting_type == 'O':
                 for _ in range(VOTING_OPTIONS_PER_VOTING):
-                    voting_option = VotingOptionFactory(voting = voting)
-                    options.append(voting_option)
-                optional_voting = OptionalVotingFactory(voting=voting, voting_options=options)
-                optional_voting.voting_options.set(options)
+                    VotingOptionFactory(voting = voting)
             votings.append(voting)
 
         self.stdout.write("Creating user votes")

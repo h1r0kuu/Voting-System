@@ -44,14 +44,6 @@ class VotingFactory(DjangoModelFactory):
     end_time = factory.LazyAttribute(lambda o: o.start_time + timedelta(days=random.randint(1, 2)))
 
 
-class UsualVotingFactory(DjangoModelFactory):
-    class Meta:
-        model = UsualVoting
-
-    voting = factory.SubFactory(VotingFactory)
-    relative_majority = factory.Faker("pybool")
-
-
 class VotingOptionFactory(DjangoModelFactory):
     class Meta:
         model = VotingOption
@@ -64,22 +56,6 @@ class VotingOptionFactory(DjangoModelFactory):
     ) 
 
     option_value = factory.Sequence(lambda n: fake.text(5).replace(".", " ") + fake.text(5))
-
-
-class OptionalVotingFactory(DjangoModelFactory):
-    class Meta:
-        model = OptionalVoting
-
-    voting = factory.SubFactory(VotingFactory)
-    
-    @factory.post_generation
-    def voting_options(self, create, extracted, **kwargs):
-        if not create:
-            return
-
-        if extracted:
-            for option in extracted:
-                self.voting_options.add(option)
 
 
 class VoteFactory(DjangoModelFactory):

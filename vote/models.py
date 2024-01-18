@@ -17,6 +17,7 @@ class Voting(models.Model):
     description = models.CharField(max_length = 1000, validators=[MinLengthValidator(100)], verbose_name = "opis")
     voting_type = models.CharField(choices=VOTING_TYPE_CHOICES, max_length=1, default = VOTING_TYPE_CHOICES[0][0], verbose_name = "typ głosowania")
     quorum = models.PositiveIntegerField(default = 51, validators=[MinValueValidator(1), MaxValueValidator(100)], verbose_name = "kworum")
+    relative_majority = models.BooleanField(default=True, verbose_name = "większość bezwzględna")
     creator = models.ForeignKey(User, on_delete = models.SET_NULL, null = True, verbose_name = "twórca")
     open_for_voting = models.BooleanField(default=True, verbose_name = "otwarte do głosowania")
     start_time = models.DateTimeField(null = False, default = timezone.now, verbose_name = "czas rozpoczęcia")
@@ -33,7 +34,7 @@ class Voting(models.Model):
         self.full_clean()
         super(Voting, self).save(*args, **kwargs)
         if self.id and self.voting_type == "O":
-            VotingOption.objects.create(voting=self, option_value="Wstrzymuje się")
+            VotingOption.objects.get_or_create(voting=self, option_value="Wstrzymuje się")
 
     def is_current(self):
         now = timezone.now()
@@ -42,19 +43,11 @@ class Voting(models.Model):
     def is_ended(self):
         return self.end_time < timezone.now()
 
-    def get_specific_vote(self):
-        if self.voting_type == 'U':
-            try:
-                return self.usualvoting
-            except UsualVoting.DoesNotExist:
-                return None
-        elif self.voting_type == 'O':
-            try:
-                return self.optionalvoting
-            except OptionalVoting.DoesNotExist:
-                return None
-        else:
-            return None
+    @property
+    def current_quorum(self):
+        total_users = User.objects.count()
+        voted_users = self.vote_set.count()
+        return int((voted_users / total_users) * 100)
 
     def __str__(self):
         return self.title
@@ -63,25 +56,6 @@ class Voting(models.Model):
         verbose_name = "Głosowanie"
         verbose_name_plural = "Głosowania"
         ordering = ["end_time"]
-
-class UsualVoting(models.Model):
-    voting = models.OneToOneField(Voting, on_delete=models.CASCADE, primary_key=True)
-    relative_majority = models.BooleanField(default=True, verbose_name = "większość bezwzględna")
-
-
-    class Meta:
-        verbose_name = "Głosowanie zwykłe"
-        verbose_name_plural = "Głosowania zwykłe"
-
-
-class OptionalVoting(models.Model):
-    voting = models.OneToOneField(Voting, on_delete=models.CASCADE, primary_key=True)
-    voting_options = models.ManyToManyField('VotingOption', related_name = 'options')
-
-
-    class Meta:
-        verbose_name = "Głosowanie na opcje"
-        verbose_name_plural = "Głosowania na opcje"
 
 
 class VotingOption(models.Model):
