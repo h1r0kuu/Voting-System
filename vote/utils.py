@@ -1,3 +1,5 @@
+from typing import Union, List
+
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont   
 from reportlab.lib.enums import TA_CENTER
@@ -13,168 +15,189 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from .models import User, Vote
+from .models import Voting, Vote
 from django.http import HttpResponse
+from django.contrib.staticfiles import finders
+from django.db.models import QuerySet
 
-def generate_pdf_report(voting):
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{voting.title}_report.pdf"'
+TOP_MARGIN = 10
 
-    c = canvas.Canvas(response, pagesize=letter)
-    pdfmetrics.registerFont(TTFont('Verdana', 'Verdana.ttf'))
-    c.setFont('Verdana', 24)
-    # Draw a red rectangle for the title
-    # c.setFillColor(colors.red)
-    # c.rect(0, 10 * inch, 8.5 * inch, 1 * inch, fill=True)
+class RaportPDF:
+    def __init__(self, voting):
+        self.voting: Voting = voting
+        self.response = HttpResponse(content_type='application/pdf; charset=utf-8')
+        self.response['Content-Disposition'] = f'attachment; filename="report_{voting.title}.pdf"'
+        self.canvas = canvas.Canvas(self.response, pagesize=letter)
+        self.step = 0
+        self.votes: Union[QuerySet, List[Vote]] = voting.vote_set.all()
+        self.sorted_votes = self.sort_votes()
 
-    # c.setFillColor(colors.white)
-    # c.setFont("Helvetica-Bold", 24)
-    # c.drawCentredString(4.25 * inch, 10.35 * inch, voting.title.upper())
+        pdfmetrics.registerFont(TTFont('DejaVuSans', finders.find("fonts/DejaVuSans.ttf")))
+        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', finders.find("fonts/DejaVuSans-Bold.ttf")))
+        self.canvas.setFont("DejaVuSans", 8)
 
-     # Define a style for the title and description
-    title_style = ParagraphStyle('Title', parent=getSampleStyleSheet()['Title'], fontSize=24, spaceAfter=12)
-    description_style = getSampleStyleSheet()['BodyText']
+    def sort_votes(self):
+        list_of_votes = self.votes
+        if len(list_of_votes) > 0:
+            if self.voting.voting_type == 'U':
+                list_of_votes = [
+                    (
+                        round((list_of_votes.filter(vote_option_for_usual=vote_choice[0]).count() * 100) / self.votes.count()),
+                        vote_choice[1]
+                    )
+                        for vote_choice in Vote.VOTE_CHOICES
+                ]
+            elif self.voting.voting_type == 'O':
+                options = self.voting.votingoption_set.all()
+                list_of_votes = [
+                    (
+                        round((list_of_votes.filter(option=option).count() * 100) / self.votes.count()), 
+                        option.option_value
+                    )
+                    for option in options
+                ]
+            list_of_votes.sort(reverse=True, key=lambda x: x[0])
+        return list_of_votes
 
-    # Create Paragraph objects for the title and description
-    title_lines = voting.title
-    title = Paragraph(voting.title, title_style)
-    description = Paragraph(voting.description, description_style)
+    def generate_title(self):
+        title_style = ParagraphStyle('Title', parent=getSampleStyleSheet()['Title'], fontSize=24, spaceAfter=12, textColor='white', fontName='DejaVuSans')
+        title_paragraph = Paragraph(self.voting.title, title_style)
 
-    # Calculate the required height for the title and description
-    title_height = title.wrap(8.5 * inch, 10 * inch)[1]
-    description_height = description.wrap(8.5 * inch, 10 * inch)[1]
-    title_lines = len(title.blPara.lines)
+        _, th = title_paragraph.wrap(8.5 * inch, 10 * inch)
+        self.step = (th + 3 * TOP_MARGIN)
+        rect_height, rect_width = self.step, letter[0]
+        rect_x_position, rect_y_position = 0, letter[1] - rect_height
 
-    # Draw a red rectangle for the title and description
-    c.setFillColor(colors.red)
-    c.rect(0, (10 - title_lines / 3.5) * inch, 8.5 * inch, (title_lines / 0.5) * inch, fill=True)
+        title_x_position, title_y_position = 0, letter[1] - (TOP_MARGIN + th)
 
-    # Draw the title and description text
-    title.drawOn(c, 0, 10 * inch)
-    # description.drawOn(c, 0, 10 * inch)
+        self.canvas.setFillColor(colors.red)
+        self.canvas.rect(rect_x_position, rect_y_position, rect_width, rect_height, fill=True)
 
-    # ...
+        title_paragraph.drawOn(self.canvas, title_x_position, title_y_position)
 
+    def generate_table(self):
+        description_style = getSampleStyleSheet()['BodyText']
+        description_style.fontName='DejaVuSans'
+        description = Paragraph(self.voting.description, description_style)
+        dw, dh = description.wrap(8.5 * inch, 10 * inch)
+    
+        current_quorum = self.voting.current_quorum
+        success = 'Tak' if current_quorum >= self.voting.quorum else 'Nie'
+        voting_result = ""
+        if current_quorum >= self.voting.quorum:
+            if self.voting.voting_type == 'O':
+                voting_result = self.sorted_votes[0][1]
+            elif self.voting.voting_type == 'U':
+                voting_result = self.sorted_votes[0][1]
+        else:
+            voting_result = "Głosowanie niważne kworum nie został spełniony"
 
-    styles = getSampleStyleSheet()
-    styles['Normal'].alignment = TA_CENTER
-    description = Paragraph(voting.description, styles['Normal'])
+        data = [
+            ["Opis", description],
+            ["Typ głosowania", self.voting.get_voting_type_display()],
+            ["Wymagany kworum", f"{self.voting.quorum} %"],
+            ["Bieżący kworum", f"{current_quorum} %"],
+            ["Twórca", self.voting.creator.username],
+            ["Głosowanie ważne", success],
+            ["Czas rozpoczęcia", self.voting.start_time.strftime('%Y-%m-%d %H:%M:%S')],
+            ["Czas zakończenia", self.voting.end_time.strftime('%Y-%m-%d %H:%M:%S')],
+            ["Czas utworzenia", self.voting.created_at.strftime('%Y-%m-%d %H:%M:%S')],
+            ["Wygrana opcja", str(voting_result)],
+        ]
 
-    total_users = User.objects.count()
-    voted_users = voting.vote_set.count()
-    gained_quorum = int((voted_users / total_users) * 100)
-    success = f'Yes {gained_quorum}%' if gained_quorum >= voting.quorum else f'No {gained_quorum}%'
+        if self.voting.voting_type == 'U':
+            data.append(["Większość bezwzględna", self.voting.relative_majority])
 
-    data = [
-        ["Description", description],
-        ["Voting Type", voting.get_voting_type_display()],
-        ["Quorum", f"{voting.quorum}%"],
-        ["Creator", voting.creator.username],
-        ["Voting successful", success],
-        ["Start Time", voting.start_time.strftime('%Y-%m-%d %H:%M:%S')],
-        ["End Time", voting.end_time.strftime('%Y-%m-%d %H:%M:%S')],
-        ["Created At", voting.created_at.strftime('%Y-%m-%d %H:%M:%S')],
-    ]
+        table = Table(data, colWidths=[3 * inch, 5.5 * inch])
+        table.setStyle(TableStyle([
+            ('TEXTFONT', (0, 0), (-1, -1), 'DejaVuSans'),
+            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
 
-    if voting.voting_type == 'U':
-        data.append(["Relative Majority", voting.usualvoting.relative_majority])
+            ('BACKGROUND', (0, 0), (-1, 0), Color(255, 0, 0, 0.1)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
 
-    table = Table(data, colWidths=[3 * inch, 5.5 * inch])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), Color(255, 0, 0, 0.1)),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
 
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), Color(255, 0, 0, 0.1)),
+            ('GRID', (0,0), (-1,-1), 1, colors.red),
 
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), Color(255, 0, 0, 0.1)),
-        ('GRID', (0,0), (-1,-1), 1, colors.red)
-    ]))
+            # row - Wygrana opcja
+            ('FONTNAME', (0, 9), (1, 9), "DejaVuSans-Bold"),
+        ]))
 
-    # Draw the table on the canvas
-    table.wrapOn(c, 0, 0)
-    table.drawOn(c, 0, (7.68 - title_lines / 1.5) * inch)
+        _, th = table.wrapOn(self.canvas, 0, 0)
+        self.step += th
+        table.drawOn(self.canvas, 0, letter[1] - self.step)
+    
+    def generate_chart(self):
+        CHART_WIDTH = CHART_HEIGHT = 200
+        self.step += CHART_HEIGHT
+        drawing = Drawing(CHART_WIDTH, CHART_HEIGHT)
+        if self.voting.voting_type == 'U':
+            votes_data, votes_labels = zip(*self.sorted_votes)
 
-    if voting.voting_type == 'U':
-        usual_voting = voting.usualvoting
-        # c.drawString(1 * inch, 7.5 * inch, f"Relative Majority: {usual_voting.relative_majority}")
+            pie = Pie()
+            pie.x = 20
+            pie.y = 70
+            pie.width = 100
+            pie.height = 100
+            pie.data = votes_data
+            pie.labels = ['Tak', 'Nie', 'Wstrzymuje się']
+            pie.slices.fontName='DejaVuSans'
+            pie.slices.popout = 3
+            drawing.add(pie)
 
-        votes = [(Vote.objects.filter(voting=voting, vote_option_for_usual=vote_choice[0]).count(), vote_choice[1]) for vote_choice in Vote.VOTE_CHOICES]
+            legend = Legend()
+            legend.x = 220
+            legend.y = 145
+            legend.colorNamePairs = [(pie.slices[i].fillColor, f"{pie.labels[i]}: {pie.data[i]}%") for i in range(len(pie.data))]
+            legend.dx = 8
+            legend.dy = 8
+            legend.yGap = 0
+            legend.strokeWidth = 0
+            legend.columnMaximum = len(pie.data)
+            legend.alignment ='right'
+            legend.fontName='DejaVuSans'
+            drawing.add(legend)
 
-        # Sort this list in descending order based on the vote count
-        votes.sort(reverse=True, key=lambda x: x[0])
+        elif self.voting.voting_type == 'O':
+            votes_data, votes_labels = zip(*self.sorted_votes)
 
-        # # Split this sorted list back into two lists: one for the vote counts and one for the labels
-        votes_data, votes_labels = zip(*votes)
+            pie = Pie()
+            pie.x = 20
+            pie.y = 70
+            pie.width = 100
+            pie.height = 100
+            pie.data = votes_data
+            pie.labels = votes_labels
+            pie.slices.popout = 3
+            pie.slices.fontName='DejaVuSans'
+            winner_index = votes_data.index(max(votes_data))
+            pie.slices[winner_index].popout = 4
+            drawing.add(pie)
 
-        d = Drawing(200, 200)
-        pie = Pie()
-        pie.x = 20
-        pie.y = 70
-        pie.width = 100
-        pie.height = 100
-        pie.data = votes_data
-        pie.labels = ['Tak', 'Nie', 'Wstrzymuje się']
-        pie.slices.popout = 3
-        d.add(pie)
+            legend = Legend()
+            legend.x = 220
+            legend.y = 165
+            legend.colorNamePairs = [(pie.slices[i].fillColor, f"{pie.labels[i]}: {pie.data[i]}%") for i in range(len(pie.data))]
+            legend.dx = 8
+            legend.dy = 8
+            legend.yGap = 0
+            legend.strokeWidth = 0
+            legend.columnMaximum = len(pie.data)
+            legend.alignment ='right'
+            legend.fontName='DejaVuSans'
+            drawing.add(legend)
 
-        legend = Legend()
-        legend.x = 220
-        legend.y = 145
-        legend.colorNamePairs = [(pie.slices[i].fillColor, f"{pie.labels[i]}: {pie.data[i]}%") for i in range(len(pie.data))]
-        legend.dx = 8
-        legend.dy = 8
-        legend.yGap = 0
-        legend.strokeWidth = 0
-        legend.columnMaximum = len(pie.data)
-        legend.alignment ='right'
-        d.add(legend)
+        renderPDF.draw(drawing, self.canvas, 2 * inch, letter[1] - self.step)
 
+    def generate_pdf(self):
+        self.generate_title()
+        self.generate_table()
+        if(self.votes.count() > 0):
+            self.generate_chart()
+        self.canvas.save()
 
-        renderPDF.draw(d, c, 2 * inch, (5 - title_lines) * inch)
-    elif voting.voting_type == 'O':
-        optional_voting = voting.get_specific_vote()
-        options = optional_voting.voting_options.all()
-
-         # Create a list of tuples where each tuple contains the vote count and the corresponding label
-        votes = [(Vote.objects.filter(voting=voting, option=option).count(), option.option_value) for option in options]
-
-        # Sort this list in descending order based on the vote count
-        votes.sort(reverse=True, key=lambda x: x[0])
-
-        # Split this sorted list back into two lists: one for the vote counts and one for the labels
-        votes_data, votes_labels = zip(*votes)
-
-        d = Drawing(200, 200)
-        pie = Pie()
-        pie.x = 20
-        pie.y = 70
-        pie.width = 100
-        pie.height = 100
-        pie.data = votes_data
-        pie.labels = votes_labels
-        pie.slices.popout = 3  # Make all slices pop out
-        winner_index = votes_data.index(max(votes_data))
-        pie.slices[winner_index].popout = 4
-        d.add(pie)
-
-         # Add a legend
-        legend = Legend()
-        legend.x = 220
-        legend.y = 165
-        legend.colorNamePairs = [(pie.slices[i].fillColor, f"{pie.labels[i]}: {pie.data[i]}%") for i in range(len(pie.data))]
-        legend.dx = 8
-        legend.dy = 8
-        legend.yGap = 0
-        legend.strokeWidth = 0
-        legend.columnMaximum = len(pie.data)
-        legend.alignment ='right'
-        d.add(legend)
-
-        renderPDF.draw(d, c, 2 * inch, (5 - title_lines) * inch)
-
-    c.save()
-
-    return response
+        return self.response
