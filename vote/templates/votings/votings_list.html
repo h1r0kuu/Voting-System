@@ -6,17 +6,22 @@
   <div class="list-group">
     <h5 class="text-center mb-4">{{page_title}}</h5>
     {% for voting in votings %}
-      <a
-        href="{% url 'vote_details' pk=voting.id %}"
-        class="list-group-item list-group-item-action border border-white active mb-1"
-        aria-current="true"
-      >
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1">{{ voting.title }}</h5>
-          <small>{{voting.end_time|naturaltime}}</small>
+      <div class="col mb-3">
+        <div class="card h-100">
+          <div class="card-header">
+            <div class="d-flex justify-content-between">
+              <h5 class="card-title">{{ voting.title }}</h5>
+              <small class="text-muted">{{voting.end_time|naturaltime}}</small>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">{{ voting.description }}</p>
+          </div>
+          <div class="card-footer">
+            <a href="{% url 'vote_details' pk=voting.id %}" class="btn btn-primary">View Details</a>
+          </div>
         </div>
-        <p class="mb-1" style="word-wrap: break-word;">{{ voting.description }}</p>
-      </a>
+      </div>
     {% endfor %}
   </div>
   {% if page_obj %}
