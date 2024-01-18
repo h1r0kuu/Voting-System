@@ -5,6 +5,9 @@
 __pycache__
 db.sqlite3
 media
+reports.zip
+vote/migrations/*
+
 
 # Backup files # 
 *.bak 
@@ -24,6 +27,7 @@ media
 .idea/**/contentModel.xml
 
 # IntelliJ
+.idea
 out/
 
 # JIRA plugin

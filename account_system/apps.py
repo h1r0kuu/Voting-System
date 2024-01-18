@@ -1,9 +1,9 @@
 from django.apps import AppConfig
 
 
-class VoteConfig(AppConfig):
+class AccountSystemConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'vote'
-
+    name = 'account_system'
+    
     def ready(self):
         import account_system.signals

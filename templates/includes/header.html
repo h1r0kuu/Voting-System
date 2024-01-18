@@ -1,33 +1,52 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="#">Navbar</a>
-  <button
-    class="navbar-toggler"
-    type="button"
-    data-toggle="collapse"
-    data-target="#navbarTogglerDemo02"
-    aria-controls="navbarTogglerDemo02"
-    aria-expanded="false"
-    aria-label="Toggle navigation"
-  >
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-      <li class="nav-item active">
-        <a class="nav-link" href="{% url 'home' %}"
-          >Home <span class="sr-only">(current)</span></a
-        >
-      </li>
-      {% comment %} <li class="nav-item">
-        <a class="nav-link" href="">Votes</a>
-      </li> {% endcomment %}
-    </ul>
-    <form class="form-inline my-2 my-lg-0">
-      <input class="form-control mr-sm-2" type="search" placeholder="Search" />
-      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">
-        Search
-      </button>
-    </form>
-    <!-- LOGGED IN -->
+<nav class="navbar navbar-expand-lg navbar-light bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand mt-2 mt-lg-0" href="{% url 'home' %}">
+      Logo
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'home' %}">Home</a>
+        </li>
+        <li class="nav-item dropdown">
+          <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Głosowania
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'upcoming_votings' %}">Nadchodzące</a></li>
+            <li><a class="dropdown-item" href="{% url 'current_votings' %}">Aktualne</a></li>
+            <li><a class="dropdown-item" href="{% url 'finished_votings' %}">Zakończone</a></li>
+          </ul>
+        </li>
+      </ul>
+      <div class="d-flex align-items-center">
+        {% if request.user.is_authenticated %}
+          <div class="dropdown">
+            <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              {{ request.user.username }}
+            </button>
+            <ul
+              class="dropdown-menu dropdown-menu-end"
+              aria-labelledby="navbarDropdownMenuAvatar"
+            >
+              <li>
+                <a class="dropdown-item" href="{% url 'settings' %}">Ustawienia</a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'logout' %}">Wylogowanie</a>
+              </li>
+            </ul>
+          </div>
+        {% else %}
+          <div class="text-end">
+            <a href="{% url 'login' %}" class="btn btn-outline-primary me-2">Login</a>
+            <a href="{% url 'signup' %}" class="btn btn-primary">Sign-up</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </nav>
