@@ -17,7 +17,6 @@ def create_dumpdate_archive(password: str) -> FileResponse:
         zf.setpassword(bytes(password, encoding='utf-8'))
         zf.write(json_file)
 
-    
     os.remove(json_file)
 
     return FileResponse(

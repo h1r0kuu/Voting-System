@@ -2,7 +2,6 @@ from typing import Union, List
 
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont   
-from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.colors import Color 
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
@@ -13,7 +12,7 @@ from reportlab.graphics import renderPDF
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from .models import Voting, Vote
 from django.http import HttpResponse
@@ -38,11 +37,12 @@ class RaportPDF:
 
     def sort_votes(self):
         list_of_votes = self.votes
+        votes_count = self.votes.count()
         if len(list_of_votes) > 0:
             if self.voting.voting_type == 'U':
                 list_of_votes = [
                     (
-                        round((list_of_votes.filter(vote_option_for_usual=vote_choice[0]).count() * 100) / self.votes.count()),
+                        round((list_of_votes.filter(vote_option_for_usual=vote_choice[0]).count() * 100) / votes_count),
                         vote_choice[1]
                     )
                         for vote_choice in Vote.VOTE_CHOICES
@@ -51,7 +51,7 @@ class RaportPDF:
                 options = self.voting.votingoption_set.all()
                 list_of_votes = [
                     (
-                        round((list_of_votes.filter(option=option).count() * 100) / self.votes.count()), 
+                        round((list_of_votes.filter(option=option).count() * 100) / votes_count), 
                         option.option_value
                     )
                     for option in options
@@ -88,16 +88,30 @@ class RaportPDF:
             if self.voting.voting_type == 'O':
                 voting_result = self.sorted_votes[0][1]
             elif self.voting.voting_type == 'U':
-                voting_result = self.sorted_votes[0][1]
+                my_dict = {key: value for value, key in self.sorted_votes}
+                votes_for = my_dict['Tak']
+                votes_against = my_dict['Nie']
+                votes_abstain = my_dict['Wstrzymuje się']
+
+                if self.voting.relative_majority:  # Relative majority
+                    if votes_for > votes_against:
+                        voting_result = 'Tak'
+                    else:
+                        voting_result = "Głosowanie jest nieważne większość względna nie spełniona "
+                else: 
+                    if votes_for > (votes_against + votes_abstain):
+                        voting_result = 'Tak'
+                    else:
+                        voting_result = "Głosowanie jest nieważne większość bezwzględna nie spełniona"
         else:
-            voting_result = "Głosowanie niważne kworum nie został spełniony"
+            voting_result = "Głosowanie jest nieważne kworum nie został spełniony"
 
         data = [
             ["Opis", description],
             ["Typ głosowania", self.voting.get_voting_type_display()],
             ["Wymagany kworum", f"{self.voting.quorum} %"],
             ["Bieżący kworum", f"{current_quorum} %"],
-            ["Twórca", self.voting.creator.username],
+            ["Twórca", f'{self.voting.creator.username} ({self.voting.creator.get_full_name()})' ],
             ["Głosowanie ważne", success],
             ["Czas rozpoczęcia", self.voting.start_time.strftime('%Y-%m-%d %H:%M:%S')],
             ["Czas zakończenia", self.voting.end_time.strftime('%Y-%m-%d %H:%M:%S')],

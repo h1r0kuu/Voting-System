@@ -29,7 +29,7 @@ class CurrentVotingsListView(ListView):
 
     def get_queryset(self) -> QuerySet[Any]:
         now = timezone.now()
-        return Voting.objects.filter(end_time__gte = now, start_time__lte = now)
+        return Voting.objects.filter(end_time__gte = now, start_time__lte = now, open_for_voting = True)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -58,12 +58,15 @@ class VoteDetailView(DetailView):
     template_name = 'votings/voting_detail.html'
     context_object_name = 'voting'
 
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         user = self.request.user
         voting = context['voting']
         options = []
-        user_vote = Vote.objects.filter(user=user, voting=voting).first()
+        user_vote = None
+        if self.request.user.is_authenticated:
+            user_vote = Vote.objects.filter(user=user, voting=voting).first()
 
         if voting.voting_type == 'U':
             options = Vote.VOTE_CHOICES
@@ -94,7 +97,7 @@ class VoteDetailView(DetailView):
 
                     Vote.objects.get_or_create(vote_option_for_usual=option_id, voting=voting, user=request.user)
             except ValidationError:
-                print("Validation error")
+                return JsonResponse({'status': 'error', 'message': 'Validation error'}, status=400)
             return JsonResponse({'status': 'success'})
 
 

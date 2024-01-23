@@ -6,15 +6,15 @@ from .models import *
 from django.http import FileResponse
 from .utils import RaportPDF
 from rangefilter.filters import DateTimeRangeFilterBuilder
-from account_system.models import User
-from django.utils.functional import cached_property
 from django.utils.html import format_html, html_safe
+from .filters import QuorumFilter
 import pyzipper
 
 
 class VotingOptionInline(admin.TabularInline):
     model = VotingOption
     extra = 5
+    max_num = 5
     template = 'admin/voting/inline.html'
 
 
@@ -27,7 +27,7 @@ class VotingAdmin(admin.ModelAdmin):
                    ('start_time', DateTimeRangeFilterBuilder(title="Start time")),
                    ('end_time', DateTimeRangeFilterBuilder(title="End time")),
                    'relative_majority',
-                   'quorum'
+                   QuorumFilter
                    )
 
     form = VotingForm

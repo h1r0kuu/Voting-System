@@ -8,5 +8,4 @@ urlpatterns = [
     path('votings/current', CurrentVotingsListView.as_view(), name = 'current_votings'),
     path('votings/finished', FinishedVotingsListView.as_view(), name = 'finished_votings'),
     path('voting/get_options', GetOptionsView.as_view(), name='get_voting_options'),
-
 ]
