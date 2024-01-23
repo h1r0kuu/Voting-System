@@ -1,9 +1,8 @@
 from django.db import models
 from account_system.models import User
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
+from django.core.validators import MaxValueValidator, MinLengthValidator
 from django.utils import timezone
-from django.utils.html import mark_safe
 from django.utils import timezone
 
 
@@ -16,7 +15,7 @@ class Voting(models.Model):
     title = models.CharField(max_length = 100, validators=[MinLengthValidator(20)], verbose_name = "tytuł")
     description = models.CharField(max_length = 1000, validators=[MinLengthValidator(100)], verbose_name = "opis")
     voting_type = models.CharField(choices=VOTING_TYPE_CHOICES, max_length=1, default = VOTING_TYPE_CHOICES[0][0], verbose_name = "typ głosowania")
-    quorum = models.PositiveIntegerField(default = 51, validators=[MinValueValidator(1), MaxValueValidator(100)], verbose_name = "kworum")
+    quorum = models.PositiveIntegerField(default = 51, validators=[MaxValueValidator(100)], verbose_name = "kworum")
     relative_majority = models.BooleanField(default=True, verbose_name = "większość bezwzględna")
     creator = models.ForeignKey(User, on_delete = models.SET_NULL, null = True, verbose_name = "twórca")
     open_for_voting = models.BooleanField(default=True, verbose_name = "otwarte do głosowania")
@@ -40,7 +39,10 @@ class Voting(models.Model):
         now = timezone.now()
         return self.start_time < now and self.end_time > now 
 
-    def is_ended(self):
+    def has_started(self):
+        return self.start_time < timezone.now()
+    
+    def has_ended(self):
         return self.end_time < timezone.now()
 
     @property

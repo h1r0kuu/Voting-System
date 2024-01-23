@@ -7,7 +7,6 @@ from .models import *
 from account_system.models import User
 import datetime
 from datetime import timedelta
-from django.db.models.fields.files import ImageFieldFile, FileField
 
 
 fake = Faker()
@@ -21,7 +20,7 @@ class UserFactory(DjangoModelFactory):
     last_name = factory.Faker("last_name")
     email = factory.Faker("email")
     password = factory.Faker("user_name")
-
+    relative_majority = factory.Faker("pybool", truth_probability = 50)
 
 class VotingFactory(DjangoModelFactory):
     class Meta:
@@ -55,7 +54,7 @@ class VotingOptionFactory(DjangoModelFactory):
         no_declaration=None
     ) 
 
-    option_value = factory.Sequence(lambda n: fake.text(5).replace(".", " ") + fake.text(5))
+    option_value = factory.Sequence(lambda n: fake.text(10).replace(".", " ") + fake.text(5))
 
 
 class VoteFactory(DjangoModelFactory):

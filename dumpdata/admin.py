@@ -1,6 +1,3 @@
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.http import FileResponse
 from django.contrib import admin    
 from .models import Dumpdata
 from .utils import create_dumpdate_archive

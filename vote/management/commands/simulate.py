@@ -15,22 +15,24 @@ VOTING_OPTIONS_PER_VOTING = 5
 NUM_VOTES = int((NUM_USERS * NUM_VOTINGS) * 0.8)
 
 class Command(BaseCommand):
-    help = 'Simulate data creation for the voting system'
+    help = 'Symulacja tworzenia danych dla systemu głosowań'
 
     @transaction.atomic
     def handle(self, *args, **kwargs):
-        self.stdout.write("Deleting old data...")
+        self.stdout.write("Usuwanie starych danych...")
         models = [Vote, User, Voting, VotingOption]
         for m in models:
-            self.stdout.write(f"Deleting old data for {m.__name__}")
-            m.objects.all().delete()
-
+            self.stdout.write(f"Usuwanie starych danych dla modelu {m.__name__}")
+            if m is User:
+                m.objects.exclude(is_superuser=True).delete()
+            else:
+                m.objects.all().delete()
         admin_group, _ = Group.objects.get_or_create(name='admin')
         sekretarz_group, _ = Group.objects.get_or_create(name='sekretarz')
         uzytkownik_group, _ = Group.objects.get_or_create(name='użytkownik')
 
-        self.stdout.write("Creating new data...")
-        self.stdout.write("Creating new Users")
+        self.stdout.write("Tworzenie nowych danych...")
+        self.stdout.write("Tworzenie nowych danych modelu User")
         users = []
         for _ in range(NUM_USERS):
             user = UserFactory()
@@ -43,9 +45,8 @@ class Command(BaseCommand):
                 user.groups.add(uzytkownik_group)
             user.save()
             users.append(user)
-            print(f'Created user with ID {user.id}')
 
-        self.stdout.write("Creating new Votings")
+        self.stdout.write("Tworzenie nowych danych modelu Voting")
         votings = []
         for _ in range(NUM_VOTINGS):
             voting = VotingFactory(creator = random.choice(users))
@@ -54,7 +55,7 @@ class Command(BaseCommand):
                     VotingOptionFactory(voting = voting)
             votings.append(voting)
 
-        self.stdout.write("Creating user votes")
+        self.stdout.write("Tworzenie nowych danych modelu Vote")
         for i in range(NUM_VOTINGS):
             voting = votings[i]
             for user in users:
@@ -68,4 +69,4 @@ class Command(BaseCommand):
                         else:
                             VoteFactory(user=user, voting=voting, option=None)
 
-        self.stdout.write(self.style.SUCCESS('Data simulation completed.'))
+        self.stdout.write(self.style.SUCCESS('Symulacja danych zakończona.'))

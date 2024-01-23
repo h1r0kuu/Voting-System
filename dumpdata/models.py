@@ -9,3 +9,5 @@ class Dumpdata(models.Model):
 
     class Meta:
         managed = False
+        verbose_name = "Zrzut danych z bazy"
+        verbose_name_plural = "Zrzut danych z bazy"

@@ -1,20 +1,26 @@
 {% extends 'base.html' %}
+{% load add_attribute %}
 {% block title %} Login {% endblock title %}
 {% block content %}
 <div class="container" style="margin-top: 5%">
   <form method="POST">
     {% csrf_token %}
     {% for field in form %}
-    <div class="mb-3">
+    <div class="form-group mb-3">
       <label class="form-label" for="{{ field.auto_id }}">{{ field.label }}</label>
-      {{field}}
+      {% if field.errors %}
+          {{field|add_attr:'form-control is-invalid'}}
+          {% for error in field.errors %}
+          <div class="invalid-feedback">
+              {{ error }}
+          </div>
+          {% endfor %}
+      {% else %}
+          {{field}}
+      {% endif %}
     </div>
     {% endfor %}
-    <div class="mb-3 form-check">
-      <input type="checkbox" class="form-check-input" id="exampleCheck1">
-      <label class="form-check-label" for="exampleCheck1">Check me out</label>
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Zarejestruj się</button>
   </form>
 </div>
 {% endblock content %}

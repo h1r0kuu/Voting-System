@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.generic import View
 from .forms import *
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group
 from django.contrib.auth import update_session_auth_hash
 
@@ -25,6 +25,8 @@ class Login(View):
             user = form.get_user()
             login(request, user)
             return redirect("home")
+        else:
+            return render(request, self.template_name, context={"form": form})
 
 
 class Registration(View):
@@ -44,7 +46,10 @@ class Registration(View):
             user = form.save()
             group, _ = Group.objects.get_or_create(name='użytkownik')
             user.groups.add(group)
-        return redirect("home")
+            return redirect("home")
+        else:
+            return render(request, self.template_name, context={"form": form})
+
         
 
 class UserChangeSettingsView(View):

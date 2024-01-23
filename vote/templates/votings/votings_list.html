@@ -11,14 +11,22 @@
           <div class="card-header">
             <div class="d-flex justify-content-between">
               <h5 class="card-title">{{ voting.title }}</h5>
-              <small class="text-muted">{{voting.end_time|naturaltime}}</small>
+              <small class="text-muted">
+                {% if voting.is_current %}
+                  Głosowanie kończy się {{voting.end_time|naturaltime}}
+                {% elif voting.has_started is False %}
+                  Głosowanie odbędzie się {{voting.end_time|naturaltime}}
+                {% elif voting.has_ended %}
+                  Głosowanie skończyło się {{voting.end_time|naturaltime}}
+                {% endif %}
+              </small>
             </div>
           </div>
           <div class="card-body">
             <p class="card-text">{{ voting.description }}</p>
           </div>
           <div class="card-footer">
-            <a href="{% url 'vote_details' pk=voting.id %}" class="btn btn-primary">View Details</a>
+            <a href="{% url 'vote_details' pk=voting.id %}" class="btn btn-primary">Zobacz głosowanie</a>
           </div>
         </div>
       </div>
