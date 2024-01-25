@@ -20,7 +20,6 @@ class UserFactory(DjangoModelFactory):
     last_name = factory.Faker("last_name")
     email = factory.Faker("email")
     password = factory.Faker("user_name")
-    relative_majority = factory.Faker("pybool", truth_probability = 50)
 
 class VotingFactory(DjangoModelFactory):
     class Meta:
@@ -37,6 +36,7 @@ class VotingFactory(DjangoModelFactory):
     )
     voting_type = factory.fuzzy.FuzzyChoice(Voting.VOTING_TYPE_CHOICES, getter=lambda c: c[0])
     quorum = factory.Faker("pyint", min_value = 20, max_value = 80)
+    relative_majority = factory.Faker("pybool", truth_probability = 50)
     creator = factory.SubFactory(UserFactory)
     open_for_voting = factory.Faker("pybool", truth_probability = 70)
     start_time = factory.Faker("date_time_between", start_date="-1d", end_date="+1d", tzinfo=datetime.timezone.utc)
