@@ -94,15 +94,15 @@ class RaportPDF:
                 votes_abstain = my_dict['Wstrzymuje się']
 
                 if self.voting.relative_majority:  # Relative majority
-                    if votes_for > votes_against:
-                        voting_result = 'Tak'
-                    else:
-                        voting_result = "Głosowanie jest nieważne większość względna nie spełniona "
-                else: 
                     if votes_for > (votes_against + votes_abstain):
                         voting_result = 'Tak'
                     else:
                         voting_result = "Głosowanie jest nieważne większość bezwzględna nie spełniona"
+                else: 
+                    if votes_for > votes_against:
+                        voting_result = 'Tak'
+                    else:
+                        voting_result = "Głosowanie jest nieważne większość względna nie spełniona"
         else:
             voting_result = "Głosowanie jest nieważne kworum nie został spełniony"
 
