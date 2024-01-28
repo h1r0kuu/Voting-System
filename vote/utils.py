@@ -29,7 +29,7 @@ class RaportPDF:
         self.canvas = canvas.Canvas(self.response, pagesize=letter)
         self.step = 0
         self.votes: Union[QuerySet, List[Vote]] = voting.vote_set.all()
-        self.sorted_votes = self.sort_votes()
+        self.sorted_votes = self.voting.get_votes_percentages()
 
         pdfmetrics.registerFont(TTFont('DejaVuSans', finders.find("fonts/DejaVuSans.ttf")))
         pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', finders.find("fonts/DejaVuSans-Bold.ttf")))
@@ -82,29 +82,7 @@ class RaportPDF:
         dw, dh = description.wrap(8.5 * inch, 10 * inch)
     
         current_quorum = self.voting.current_quorum
-        success = 'Tak' if current_quorum >= self.voting.quorum else 'Nie'
-        voting_result = ""
-        if current_quorum >= self.voting.quorum:
-            if self.voting.voting_type == 'O':
-                voting_result = self.sorted_votes[0][1]
-            elif self.voting.voting_type == 'U':
-                my_dict = {key: value for value, key in self.sorted_votes}
-                votes_for = my_dict['Tak']
-                votes_against = my_dict['Nie']
-                votes_abstain = my_dict['Wstrzymuje się']
-
-                if self.voting.relative_majority:  # Relative majority
-                    if votes_for > votes_against:
-                        voting_result = 'Tak'
-                    else:
-                        voting_result = "Głosowanie jest nieważne większość względna nie spełniona "
-                else: 
-                    if votes_for > (votes_against + votes_abstain):
-                        voting_result = 'Tak'
-                    else:
-                        voting_result = "Głosowanie jest nieważne większość bezwzględna nie spełniona"
-        else:
-            voting_result = "Głosowanie jest nieważne kworum nie został spełniony"
+        voting_result = self.voting.get_result()['winner']
 
         data = [
             ["Opis", description],
@@ -112,7 +90,6 @@ class RaportPDF:
             ["Wymagany kworum", f"{self.voting.quorum} %"],
             ["Bieżący kworum", f"{current_quorum} %"],
             ["Twórca", f'{self.voting.creator.username} ({self.voting.creator.get_full_name()})' ],
-            ["Głosowanie ważne", success],
             ["Czas rozpoczęcia", self.voting.start_time.strftime('%Y-%m-%d %H:%M:%S')],
             ["Czas zakończenia", self.voting.end_time.strftime('%Y-%m-%d %H:%M:%S')],
             ["Czas utworzenia", self.voting.created_at.strftime('%Y-%m-%d %H:%M:%S')],
@@ -138,9 +115,8 @@ class RaportPDF:
             ('GRID', (0,0), (-1,-1), 1, colors.red),
 
             # row - Wygrana opcja
-            ('FONTNAME', (0, 9), (1, 9), "DejaVuSans-Bold"),
+            ('FONTNAME', (0, 8), (1, 8), "DejaVuSans-Bold"),
         ]))
-
         _, th = table.wrapOn(self.canvas, 0, 0)
         self.step += th
         table.drawOn(self.canvas, 0, letter[1] - self.step)

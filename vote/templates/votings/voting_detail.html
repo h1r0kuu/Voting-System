@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load humanize l10n %}
 
 {% block title %} Home {% endblock title %}
 {% block additional_styles %}
@@ -23,11 +23,26 @@
     <div class="container">
         <div class="container-xl big-padding">
               {% if voting.has_ended is True %}
-                <div class="d-flex align-items-center justify-content-center vh-100">
-                  <div class="text-center">
-                      <h1 class="display-1 fw-bold">Głosowanie skończone</h1>
-                      <p class="fs-3"> <span class="text-danger">Opps!</span> Głosowanie skończyło się {{ voting.end_time }}</p>
-                      <a href="{% url 'home' %}" class="btn btn-primary">Strona główna</a>
+                <div class="container">
+                  <h2 class="text-center my-5">{{ voting.title }}</h2>
+                  {% if voting.get_result.status%}
+                  <div class="alert alert-success" role="alert">
+                    Wygrana opcja - {{ voting.get_result.winner }}
+                  </div>
+                  {% else %}
+                  <div class="alert alert-danger" role="alert">
+                    {{ voting.get_result.winner }}
+                  </div>
+                  {% endif %}
+                  <div class="card">
+                      <div class="card-body">
+                        {% for option in options %}
+                          <h5 class="card-title mt-2">{{option.1}}</h5>
+                          <div class="progress mb-2">
+                              <div class="progress-bar {% if forloop.first %}bg-success{% endif %}" role="progressbar" style="width: {{ option.0|unlocalize }}%;" aria-valuenow="{{ option.0 }}" aria-valuemin="0" aria-valuemax="100">{{ option.0 }}%</div>
+                          </div>
+                        {% endfor %}
+                      </div>
                   </div>
                 </div>
               {% elif voting.has_started is False %}
