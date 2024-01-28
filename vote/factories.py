@@ -21,6 +21,7 @@ class UserFactory(DjangoModelFactory):
     email = factory.Faker("email")
     password = factory.Faker("user_name")
 
+
 class VotingFactory(DjangoModelFactory):
     class Meta:
         model = Voting
@@ -40,7 +41,7 @@ class VotingFactory(DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
     open_for_voting = factory.Faker("pybool", truth_probability = 70)
     start_time = factory.Faker("date_time_between", start_date="-1d", end_date="+1d", tzinfo=datetime.timezone.utc)
-    end_time = factory.LazyAttribute(lambda o: o.start_time + timedelta(days=random.randint(1, 2)))
+    end_time = factory.LazyAttribute(lambda o: o.start_time + timedelta(hours=random.randint(1, 24)))
 
 
 class VotingOptionFactory(DjangoModelFactory):

@@ -3,7 +3,6 @@ from account_system.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinLengthValidator
 from django.utils import timezone
-from django.utils import timezone
 
 
 class Voting(models.Model):
@@ -45,11 +44,60 @@ class Voting(models.Model):
     def has_ended(self):
         return self.end_time < timezone.now()
 
+
     @property
     def current_quorum(self):
         total_users = User.objects.count()
         voted_users = self.vote_set.count()
         return int((voted_users / total_users) * 100)
+    
+    def get_result(self):
+        if self.current_quorum >= self.quorum:
+            if self.voting_type == 'O':
+                return {"status": True, "winner": self.get_votes_percentages()[0][1]}
+            elif self.voting_type == 'U':
+                my_dict = {key: value for value, key in self.get_votes_percentages()}
+                votes_for = my_dict['Tak']
+                votes_against = my_dict['Nie']
+                votes_abstain = my_dict['Wstrzymuje się']
+
+                if self.relative_majority:  # Relative majority
+                    if votes_for > (votes_against + votes_abstain):
+                        return {"status": True, "winner": 'Tak'}
+                    else:
+                        return {"status": False, "winner": "Głosowanie jest nieważne większość bezwzględna nie spełniona"}
+                else: 
+                    if votes_for > votes_against:
+                        return {"status": True, "winner": 'Tak'}
+                    else:
+                        return {"status": False, "winner": "Głosowanie jest nieważne większość względna nie spełniona"}
+        else:
+            return {"status": False, "winner": "Głosowanie jest nieważne kworum nie został spełniony"}
+
+    def get_votes_percentages(self):
+        if self.id is not None:
+            list_of_votes = self.vote_set.all()
+            votes_count = list_of_votes.count()
+            if len(list_of_votes) > 0:
+                if self.voting_type == 'U':
+                    list_of_votes = [
+                        (
+                            round((list_of_votes.filter(vote_option_for_usual=vote_choice[0]).count() * 100) / votes_count, 1),
+                            vote_choice[1]
+                        )
+                            for vote_choice in Vote.VOTE_CHOICES
+                    ]
+                elif self.voting_type == 'O':
+                    options = self.votingoption_set.all()
+                    list_of_votes = [
+                        (
+                            round((list_of_votes.filter(option=option).count() * 100) / votes_count, 1), 
+                            option.option_value
+                        )
+                        for option in options
+                    ]
+                list_of_votes.sort(reverse=True, key=lambda x: x[0])
+            return list_of_votes
 
     def __str__(self):
         return self.title
@@ -95,9 +143,6 @@ class Vote(models.Model):
 
     def clean(self):
         if self.voting_id is not None:
-            if not self.voting.is_current() or not self.voting.open_for_voting:
-                raise ValidationError("To głosowanie nie odbywa się teraz")
-
             if self.voting.voting_type == 'U':
                 if self.option_id is not None:
                     raise ValidationError({"option":"Możesz wybrać tylko Tak, Nie lub Wstrzymaj się. To pole było puste"})
@@ -118,6 +163,7 @@ class Vote(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super(Vote, self).save(*args, **kwargs)
+
 
     def __str__(self):
         string = f"{self.voting.title} {self.user.get_full_name()} "

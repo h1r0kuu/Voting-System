@@ -76,8 +76,10 @@ class VoteDetailView(DetailView):
             options = voting.votingoption_set.all()
             if user_vote:
                 context['selected_option'] = user_vote.option
-
-        context['options'] = options       
+        if voting.has_ended():
+            context['options'] = voting.get_votes_percentages()
+        else:
+            context['options'] = options
         return context
 
     def post(self, request, *args, **kwargs):
@@ -94,10 +96,9 @@ class VoteDetailView(DetailView):
                 else:
                     if existed_vote and option_id != existed_vote.vote_option_for_usual:
                         existed_vote.delete()
-
                     Vote.objects.get_or_create(vote_option_for_usual=option_id, voting=voting, user=request.user)
-            except ValidationError:
-                return JsonResponse({'status': 'error', 'message': 'Validation error'}, status=400)
+            except ValidationError as validation_error:
+                return JsonResponse({'status': 'error', 'message': validation_error.messages}, status=400)
             return JsonResponse({'status': 'success'})
 
 
