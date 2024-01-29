@@ -46,6 +46,7 @@ class Registration(View):
             user = form.save()
             group, _ = Group.objects.get_or_create(name='użytkownik')
             user.groups.add(group)
+            login(request, user)
             return redirect("home")
         else:
             return render(request, self.template_name, context={"form": form})

@@ -70,6 +70,9 @@ class Voting(models.Model):
                     if votes_for > votes_against:
                         return {"status": True, "winner": 'Tak'}
                     else:
+                        print(my_dict)
+                        print(votes_for)
+                        print(votes_against)
                         return {"status": False, "winner": "Głosowanie jest nieważne większość względna nie spełniona"}
         else:
             return {"status": False, "winner": "Głosowanie jest nieważne kworum nie został spełniony"}
