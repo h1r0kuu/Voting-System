@@ -11,7 +11,7 @@ class Voting(models.Model):
         ("O","OPTIONAL"),
     ]
 
-    title = models.CharField(max_length = 100, validators=[MinLengthValidator(20)], verbose_name = "tytuł")
+    title = models.CharField(max_length = 100, validators=[MinLengthValidator(15)], verbose_name = "tytuł")
     description = models.CharField(max_length = 1000, validators=[MinLengthValidator(100)], verbose_name = "opis")
     voting_type = models.CharField(choices=VOTING_TYPE_CHOICES, max_length=1, default = VOTING_TYPE_CHOICES[0][0], verbose_name = "typ głosowania")
     quorum = models.PositiveIntegerField(default = 51, validators=[MaxValueValidator(100)], verbose_name = "kworum")
@@ -70,6 +70,9 @@ class Voting(models.Model):
                     if votes_for > votes_against:
                         return {"status": True, "winner": 'Tak'}
                     else:
+                        print(my_dict)
+                        print(votes_for)
+                        print(votes_against)
                         return {"status": False, "winner": "Głosowanie jest nieważne większość względna nie spełniona"}
         else:
             return {"status": False, "winner": "Głosowanie jest nieważne kworum nie został spełniony"}

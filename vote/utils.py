@@ -127,14 +127,15 @@ class RaportPDF:
         drawing = Drawing(CHART_WIDTH, CHART_HEIGHT)
         if self.voting.voting_type == 'U':
             votes_data, votes_labels = zip(*self.sorted_votes)
-
+            print(votes_data)
+            print(votes_labels)
             pie = Pie()
             pie.x = 20
             pie.y = 70
             pie.width = 100
             pie.height = 100
             pie.data = votes_data
-            pie.labels = ['Tak', 'Nie', 'Wstrzymuje się']
+            pie.labels = votes_labels
             pie.slices.fontName='DejaVuSans'
             pie.slices.popout = 3
             drawing.add(pie)
